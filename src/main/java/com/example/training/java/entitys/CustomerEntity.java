@@ -1,9 +1,6 @@
 package com.example.training.java.entitys;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,11 +11,12 @@ import org.springframework.data.annotation.LastModifiedDate;
 import java.sql.Timestamp;
 
 @Entity
+@Table(name = "customer")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Customer {
+public class CustomerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +25,8 @@ public class Customer {
     private String username;
 
     private String password;
+
+    private String role;
 
     @CreatedDate
     private Timestamp created_time;

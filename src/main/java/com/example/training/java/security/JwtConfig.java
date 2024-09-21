@@ -1,4 +1,4 @@
 package com.example.training.java.security;
 
-public class ConfigJwt {
+public class JwtConfig {
 }
