@@ -26,7 +26,7 @@ public class CustomerController {
     public CustomerEntity createCustomer(@RequestBody CustomerRequest customerRequest) {
         CustomerEntity customerEntity = CustomerEntity.builder()
                 .username(customerRequest.getUsername())
-                .password(customerRequest.getPassword())
+                .password("{noop}" + customerRequest.getPassword())
                 .role(customerRequest.getRole())
                 .build();
         return customerRepository.save(customerEntity);
