@@ -1,5 +1,6 @@
 package com.example.training.java.controllers;
 
+import com.example.training.java.dto.CustomerRequest;
 import com.example.training.java.entitys.CustomerEntity;
 import com.example.training.java.repositorys.CustomerRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,13 +23,18 @@ public class CustomerController {
 
     @Operation(summary = "Create customer", description = "Return new customer")
     @PostMapping("/customer/create")
-    public CustomerEntity createCustomer(@RequestBody CustomerEntity customerEntityRequest) {
-        return customerRepository.save(customerEntityRequest);
+    public CustomerEntity createCustomer(@RequestBody CustomerRequest customerRequest) {
+        CustomerEntity customerEntity = CustomerEntity.builder()
+                .username(customerRequest.getUsername())
+                .password(customerRequest.getPassword())
+                .role(customerRequest.getRole())
+                .build();
+        return customerRepository.save(customerEntity);
     }
 
     @Operation(summary = "Update customer by id", description = "Return customer after update")
     @PutMapping("/customer/update/{id}")
-    public CustomerEntity createCustomer(@PathVariable(value = "id") Long id, @RequestBody CustomerEntity customerEntityRequest) {
+    public CustomerEntity createCustomer(@PathVariable(value = "id") Long id, @RequestBody CustomerRequest customerEntityRequest) {
         CustomerEntity customerEntity = customerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
         customerEntity.setUsername(customerEntityRequest.getUsername());

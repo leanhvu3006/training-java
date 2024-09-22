@@ -1,5 +1,6 @@
 package com.example.training.java.security;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -16,7 +18,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -37,8 +40,8 @@ public class JwtFilter extends OncePerRequestFilter {
             final String token = getTokenFromHeader(header);
             if(StringUtils.hasText(token) && jwtUtils.validateRequestToken(token)) {
                 final String userNameFromJwtToken = jwtUtils.getUserNameFromJwtToken(token);
-                final Collection<? extends GrantedAuthority> claimFromJwtToken = jwtUtils.getClaimFromJwtToken(token);
-                final UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userNameFromJwtToken, null, claimFromJwtToken);
+                Claims claimFromJwtToken = jwtUtils.getClaimFromJwtToken(token);
+                final UsernamePasswordAuthenticationToken authToken = getUsernamePasswordAuthenticationToken(claimFromJwtToken, userNameFromJwtToken);
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
@@ -46,6 +49,15 @@ public class JwtFilter extends OncePerRequestFilter {
             log.error("Can not set user to authentication: {}", e.getMessage());
         }
         filterChain.doFilter(request, response);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(Claims claimFromJwtToken, String userNameFromJwtToken) {
+        List<String> authoritiesList = (List<String>) claimFromJwtToken.get("authorization");
+        List<GrantedAuthority> authorities = authoritiesList.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+        return new UsernamePasswordAuthenticationToken(userNameFromJwtToken, null, authorities);
     }
 
     private String getTokenFromHeader(String header) {

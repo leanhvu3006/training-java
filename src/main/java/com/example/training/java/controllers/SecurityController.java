@@ -16,11 +16,11 @@ public class SecurityController {
 
     private final Environment environment;
 
-    @GetMapping("/getenv")
-    @ResponseBody
-    public String[] getEnv() {
-        return environment.getActiveProfiles();
-    }
+//    @GetMapping("/getenv")
+//    @ResponseBody
+//    public String[] getEnv() {
+//        return environment.getActiveProfiles();
+//    }
 
     @GetMapping("/index")
     public String getIndex() {
@@ -36,9 +36,9 @@ public class SecurityController {
         return "/manager";
     }
 
-    @GetMapping("/login_fail")
-    public String loginFail() {
-        return "/login_fail";
-    }
+//    @GetMapping("/login_fail")
+//    public String loginFail() {
+//        return "/login_fail";
+//    }
 }
 

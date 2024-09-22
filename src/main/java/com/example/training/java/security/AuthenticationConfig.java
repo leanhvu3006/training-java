@@ -3,15 +3,17 @@ package com.example.training.java.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -42,20 +44,27 @@ public class AuthenticationConfig {
     private final JwtFilter jwtFilter;
     private final DataSource dataSource;
     private final UserDetailServiceImpl userDetailService;
+    private final JwtUtils jwtUtil;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/customer/**").permitAll()
                         .requestMatchers("/file/**").permitAll()
+                        .requestMatchers("/jwt/**").permitAll()
                         .requestMatchers(IGNORE_SWAGGER).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(formLogin -> formLogin
                         .loginPage("/index")
                         .loginProcessingUrl("/perform_login")
-                        .successHandler(authenticationSuccessHandler())
+                        .successHandler((request, response, authentication) -> {
+                            String token = jwtUtil.generateJwtToken(authentication);
+                            response.addHeader("Authorization", "Bearer " + token);
+                            response.sendRedirect("/manager");
+                        })
 //                        .failureHandler()
                         .permitAll())
                 .authenticationProvider(authenticationProvider().getFirst())// apply 1 authenticationProvider
@@ -100,6 +109,11 @@ public class AuthenticationConfig {
     }
 
     @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
     public List<AuthenticationProvider> authenticationProvider() {
         final DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailService);
@@ -128,6 +142,6 @@ public class AuthenticationConfig {
 
     private static final String[] IGNORE_SWAGGER = {
             "/v3/api-docs/**",
-            "/swagger-ui/**"
+            "/swagger-ui*/**"
     };
 }

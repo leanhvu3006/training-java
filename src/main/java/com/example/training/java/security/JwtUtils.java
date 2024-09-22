@@ -1,15 +1,16 @@
 package com.example.training.java.security;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -22,10 +23,18 @@ public class JwtUtils {
     @Value("${jwt.secret.key}")
     private String secretKey;
 
-    public String generateJwtToken(String username, Collection<? extends GrantedAuthority> authorities) {
+    public String generateJwtToken(Authentication authentication) {
+        final UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        Map<String, Object> claims = new HashMap<>();
+        List<String> authorities = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+        claims.put("authorization", authorities);
+
         return Jwts.builder()
-                .setSubject(username)
-                .claim("authorization", authorities)
+                .setSubject(userDetails.getUsername())
+                .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtTokenExpire))
                 .signWith(SignatureAlgorithm.HS512, secretKey)
@@ -48,7 +57,7 @@ public class JwtUtils {
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
     }
 
-    public Collection<? extends GrantedAuthority> getClaimFromJwtToken(String token) {
-        return (Collection<? extends GrantedAuthority>) Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().get("authorization");
+    public Claims getClaimFromJwtToken(String token) {
+        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
     }
 }
