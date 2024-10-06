@@ -5,10 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "customer")
@@ -16,6 +20,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+//@EntityListeners(AuditingEntityListener.class)
 public class CustomerEntity {
 
     @Id
@@ -28,9 +33,11 @@ public class CustomerEntity {
 
     private String role;
 
-    @CreatedDate
-    private Timestamp created_time;
+    @CreationTimestamp
+//    @CreatedDate
+    private LocalDateTime createdTime;
 
-    @LastModifiedDate
-    private Timestamp modified_time;
+    @UpdateTimestamp
+//    @LastModifiedDate
+    private LocalDateTime modifiedTime;
 }
